@@ -1,0 +1,2855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shaker — Home Cocktail Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Karla:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0E0B08;
+  --surface: #1A1510;
+  --surface2: #221C15;
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --gold-dim: #7A6330;
+  --cream: #F0E6D3;
+  --cream-muted: #9A8A76;
+  --border: #2E2418;
+  --border-gold: #3D3020;
+  --red: #8B2020;
+  --green: #1E4D2B;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Karla', sans-serif;
+  background: var(--bg);
+  color: var(--cream);
+  min-height: 100vh;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* Header */
+header {
+  border-bottom: 1px solid var(--border-gold);
+  padding: 0 40px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+}
+
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.logo-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.logo-tagline {
+  font-size: 11px;
+  color: var(--cream-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+.lang-toggle {
+  display: flex;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lang-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  font-family: 'Karla', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  cursor: pointer;
+  color: var(--cream-muted);
+  transition: all 0.2s;
+}
+
+.lang-btn.active {
+  background: var(--gold);
+  color: var(--bg);
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  min-height: calc(100vh - 68px);
+}
+
+/* Left panel */
+.left-panel {
+  border-right: 1px solid var(--border-gold);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 68px);
+  position: sticky;
+  top: 68px;
+}
+
+.panel-header {
+  padding: 28px 28px 0;
+}
+
+.panel-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 4px;
+}
+
+.panel-sub {
+  font-size: 12px;
+  color: var(--cream-muted);
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+}
+
+/* Popular bar */
+.popular-bar {
+  margin: 20px 28px 0;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+}
+
+.popular-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.popular-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.popular-chip {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  border-radius: 2px;
+  font-family: 'Karla', sans-serif;
+  font-size: 11.5px;
+  color: var(--gold-light);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 400;
+}
+
+.popular-chip:hover, .popular-chip.selected {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg);
+}
+
+/* Custom input */
+.custom-input-wrap {
+  margin: 16px 28px 0;
+  display: flex;
+  gap: 8px;
+}
+
+.custom-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Karla', sans-serif;
+  font-size: 13px;
+  color: var(--cream);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.custom-input::placeholder { color: var(--cream-muted); }
+.custom-input:focus { border-color: var(--gold-dim); }
+
+.add-btn {
+  padding: 8px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  color: var(--gold);
+  font-family: 'Karla', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.add-btn:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+
+/* Categories */
+.categories {
+  padding: 16px 28px;
+  flex: 1;
+}
+
+.category {
+  margin-bottom: 20px;
+}
+
+.cat-title {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-gold);
+}
+
+.ingredients-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ingredient-tag {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-family: 'Karla', sans-serif;
+  font-size: 12.5px;
+  color: var(--cream-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.ingredient-tag:hover {
+  border-color: var(--gold-dim);
+  color: var(--cream);
+}
+
+.ingredient-tag.selected {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg);
+  font-weight: 500;
+}
+
+/* Selected summary */
+.selected-summary {
+  border-top: 1px solid var(--border-gold);
+  padding: 16px 28px;
+  background: var(--surface2);
+}
+
+.selected-count {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 10px;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 14px;
+  min-height: 28px;
+}
+
+.selected-pill {
+  padding: 3px 10px 3px 8px;
+  background: var(--gold);
+  border-radius: 2px;
+  font-size: 12px;
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.remove-pill {
+  cursor: pointer;
+  opacity: 0.6;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.remove-pill:hover { opacity: 1; }
+
+.find-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--gold);
+  border: none;
+  border-radius: 4px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--bg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.find-btn:hover { background: var(--gold-light); }
+.find-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Right panel */
+.right-panel {
+  padding: 40px;
+  overflow-y: auto;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  filter: grayscale(0.5);
+}
+
+.empty-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--cream-muted);
+  margin-bottom: 8px;
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: var(--cream-muted);
+  font-weight: 300;
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+/* Results header */
+.results-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-gold);
+}
+
+.results-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  color: var(--cream);
+}
+
+.results-count {
+  font-size: 12px;
+  color: var(--cream-muted);
+  letter-spacing: 1px;
+}
+
+/* Section label */
+.section-label {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 16px;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-gold);
+}
+
+/* Recipe cards */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.recipe-card {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.recipe-card:hover {
+  border-color: var(--gold-dim);
+  background: var(--surface2);
+  transform: translateY(-2px);
+}
+
+.recipe-card.missing-one {
+  border-color: var(--border);
+  opacity: 0.75;
+}
+
+.missing-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 8px;
+  background: var(--surface2);
+  border: 1px solid var(--gold-dim);
+  border-radius: 2px;
+  font-size: 10px;
+  color: var(--gold-dim);
+  letter-spacing: 1px;
+}
+
+.card-emoji {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.card-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.card-name-zh {
+  font-size: 13px;
+  color: var(--cream-muted);
+  margin-bottom: 10px;
+  font-weight: 300;
+}
+
+.card-ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.ing-tag {
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.ing-tag.have {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--gold-light);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+.ing-tag.missing {
+  background: rgba(139, 32, 32, 0.15);
+  color: #D4837A;
+  border: 1px solid rgba(139, 32, 32, 0.3);
+}
+
+.card-difficulty {
+  font-size: 11px;
+  color: var(--cream-muted);
+  letter-spacing: 0.5px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+  animation: fadeOverlay 0.2s ease;
+}
+
+@keyframes fadeOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  padding: 28px 28px 20px;
+  border-bottom: 1px solid var(--border-gold);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-emoji { font-size: 40px; margin-bottom: 10px; display: block; }
+
+.modal-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--cream);
+  line-height: 1.1;
+}
+
+.modal-name-zh {
+  font-size: 14px;
+  color: var(--cream-muted);
+  margin-top: 4px;
+}
+
+.close-btn {
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  color: var(--cream-muted);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.close-btn:hover { border-color: var(--gold-dim); color: var(--cream); }
+
+.modal-body { padding: 24px 28px 28px; }
+
+.modal-section-title {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 12px;
+}
+
+.modal-ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.modal-step {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--gold-dim);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--gold);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-text {
+  font-size: 14px;
+  color: var(--cream);
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+.modal-tip {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: var(--surface2);
+  border-left: 2px solid var(--gold-dim);
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+  color: var(--cream-muted);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border-gold);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--cream-muted);
+  letter-spacing: 1px;
+}
+
+/* Fav nav button */
+.fav-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  font-family: 'Karla', sans-serif;
+  font-size: 13px;
+  color: var(--cream-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fav-nav-btn:hover, .fav-nav-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.fav-nav-count {
+  background: var(--gold);
+  color: var(--bg);
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Fav button on card */
+.fav-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  background: var(--surface2);
+  border: 1px solid var(--border-gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  z-index: 2;
+  line-height: 1;
+}
+.fav-btn:hover { border-color: var(--gold); background: var(--surface); }
+.fav-btn.active { background: var(--gold); border-color: var(--gold); }
+
+/* Fav button in modal */
+.modal-fav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  font-family: 'Karla', sans-serif;
+  font-size: 13px;
+  color: var(--cream-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+.modal-fav-btn:hover { border-color: var(--gold); color: var(--gold); }
+.modal-fav-btn.active { background: var(--gold); border-color: var(--gold); color: var(--bg); font-weight: 500; }
+
+/* Favorites empty state */
+.fav-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+/* No-shake mode toggle */
+.noshake-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  font-family: 'Karla', sans-serif;
+  font-size: 13px;
+  color: var(--cream-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.noshake-toggle:hover { border-color: var(--gold-dim); color: var(--cream); }
+.noshake-toggle.active { background: #1e4d2b; border-color: #5cb87a; color: #5cb87a; }
+
+/* Method badge on card */
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+  border: 1px solid var(--border-gold);
+  color: var(--cream-muted);
+  background: transparent;
+}
+.method-badge.build { border-color: #1e4d2b; color: #5cb87a; background: rgba(30,77,43,0.3); }
+.method-badge.blend { border-color: #1e3a5a; color: #6ab0e8; background: rgba(30,58,90,0.3); }
+
+/* No-shake alternative tip in modal */
+.noshake-tip {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(30,77,43,0.2);
+  border: 1px solid #1e4d2b;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: #7dd49a;
+  line-height: 1.7;
+}
+.noshake-tip-title {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #5cb87a;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.tonight-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  border-radius: 4px;
+  font-family: 'Karla', sans-serif; font-size: 13px;
+  color: var(--gold-light); cursor: pointer; transition: all 0.2s;
+}
+.tonight-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+.tonight-dice { display: inline-block; transition: transform 0.3s; }
+.tonight-btn.spinning .tonight-dice { animation: diceSpin 0.5s ease-in-out; }
+@keyframes diceSpin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.4); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.menu-nav-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  font-family: 'Karla', sans-serif; font-size: 13px;
+  color: var(--cream-muted); cursor: pointer; transition: all 0.2s;
+}
+.menu-nav-btn:hover, .menu-nav-btn.active { border-color: var(--gold); color: var(--gold); }
+
+/* Tonight spotlight card */
+.tonight-spotlight {
+  background: linear-gradient(135deg, var(--surface2) 0%, #1e1708 100%);
+  border: 1px solid var(--gold-dim);
+  border-radius: 6px;
+  padding: 28px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.4s ease;
+}
+.tonight-spotlight::before {
+  content: ''; position: absolute;
+  top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.tonight-label {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold-dim); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tonight-label::after { content:''; flex:1; height:1px; background: var(--border-gold); }
+.tonight-card { display: flex; align-items: flex-start; gap: 20px; }
+.tonight-emoji { font-size: 52px; flex-shrink: 0; }
+.tonight-info { flex: 1; }
+.tonight-name {
+  font-family: 'Cormorant Garamond', serif; font-size: 28px;
+  color: var(--cream); line-height: 1.1; margin-bottom: 4px;
+}
+.tonight-sub { font-size: 13px; color: var(--cream-muted); margin-bottom: 8px; }
+.tonight-meta { font-size: 11px; color: var(--cream-muted); margin-bottom: 12px; line-height: 1.6; }
+.tonight-actions { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+.tonight-view-btn {
+  padding: 8px 20px;
+  background: var(--gold); border: none; border-radius: 2px;
+  font-family: 'Karla', sans-serif; font-size: 12px; font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--bg);
+  cursor: pointer; transition: all 0.2s;
+}
+.tonight-view-btn:hover { background: var(--gold-light); }
+.tonight-reroll {
+  padding: 8px 14px;
+  background: transparent; border: 1px solid var(--border-gold); border-radius: 2px;
+  font-family: 'Karla', sans-serif; font-size: 12px; color: var(--cream-muted);
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+}
+.tonight-reroll:hover { border-color: var(--gold-dim); color: var(--cream); }
+
+/* Menu view */
+.menu-toolbar {
+  display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.menu-filter {
+  padding: 5px 14px;
+  background: transparent; border: 1px solid var(--border-gold); border-radius: 2px;
+  font-family: 'Karla', sans-serif; font-size: 11.5px; color: var(--cream-muted);
+  cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
+}
+.menu-filter:hover { border-color: var(--gold-dim); color: var(--cream); }
+.menu-filter.active { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+.menu-search {
+  flex: 1; min-width: 160px;
+  background: var(--surface2); border: 1px solid var(--border-gold); border-radius: 4px;
+  padding: 6px 12px; font-family: 'Karla', sans-serif; font-size: 13px; color: var(--cream); outline: none;
+}
+.menu-search::placeholder { color: var(--cream-muted); }
+.menu-search:focus { border-color: var(--gold-dim); }
+
+/* Readiness pill on menu cards */
+.readiness {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 8px; padding: 2px 8px; border-radius: 2px;
+  font-size: 10px; letter-spacing: 0.5px; font-weight: 500;
+}
+.readiness.can-make { background: rgba(30,77,43,0.5); color: #5cb87a; border: 1px solid #1e4d2b; }
+.readiness.almost   { background: rgba(201,168,76,0.15); color: var(--gold-light); border: 1px solid var(--gold-dim); }
+.readiness.missing  { background: transparent; color: var(--cream-muted); border: 1px solid var(--border); }
+
+/* ── SPLASH SCREEN ─────────────────────────────────────────────── */
+.splash {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.splash.exit {
+  animation: splashExit 0.9s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+@keyframes splashExit {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-40px); pointer-events: none; }
+}
+
+/* Animated background lines */
+.splash-lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.splash-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  opacity: 0;
+  animation: lineSweep 3s ease-in-out infinite;
+}
+
+.splash-line:nth-child(1) { top: 20%; width: 60%; left: 20%; animation-delay: 0s; }
+.splash-line:nth-child(2) { top: 40%; width: 40%; left: 30%; animation-delay: 0.6s; }
+.splash-line:nth-child(3) { top: 60%; width: 50%; left: 25%; animation-delay: 1.2s; }
+.splash-line:nth-child(4) { top: 80%; width: 35%; left: 32%; animation-delay: 1.8s; }
+
+@keyframes lineSweep {
+  0%   { opacity: 0; transform: scaleX(0); transform-origin: left; }
+  40%  { opacity: 1; transform: scaleX(1); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Center content */
+.splash-center {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* Big icon */
+.splash-icon {
+  font-size: 64px;
+  opacity: 0;
+  transform: translateY(20px) rotate(-15deg);
+  animation: splashIconIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+  display: block;
+  margin-bottom: 28px;
+  filter: drop-shadow(0 0 30px rgba(201,168,76,0.4));
+}
+
+@keyframes splashIconIn {
+  to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+.splash-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 72px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeUp 0.7s ease 0.7s forwards;
+  line-height: 1;
+}
+
+.splash-divider {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 20px auto;
+  animation: dividerGrow 0.8s ease 1.1s forwards;
+}
+
+@keyframes dividerGrow {
+  to { width: 200px; }
+}
+
+/* Feature cards */
+.splash-features {
+  display: flex;
+  gap: 32px;
+  margin-top: 8px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 1.5s forwards;
+}
+
+.splash-feature {
+  text-align: center;
+  width: 140px;
+}
+
+.splash-feature-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.splash-feature-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.splash-feature-desc {
+  font-size: 11px;
+  color: var(--cream-muted);
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+/* Tagline */
+.splash-tagline {
+  margin-top: 32px;
+  font-size: 13px;
+  color: var(--cream-muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 300;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 1.8s forwards;
+}
+
+/* CTA button */
+.splash-cta {
+  margin-top: 40px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 2.1s forwards;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.splash-btn {
+  padding: 14px 48px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.splash-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: -1;
+}
+
+.splash-btn:hover {
+  color: var(--bg);
+}
+
+.splash-btn:hover::before {
+  transform: translateX(0);
+}
+
+.splash-skip {
+  font-size: 11px;
+  color: var(--cream-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'Karla', sans-serif;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.splash-skip:hover { opacity: 1; }
+
+/* Floating particles */
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--gold-dim);
+  border-radius: 50%;
+  animation: float linear infinite;
+  opacity: 0;
+}
+
+@keyframes float {
+  0%   { opacity: 0; transform: translateY(0) translateX(0); }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-120px) translateX(var(--drift)); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .splash-logo { font-size: 48px; letter-spacing: 8px; }
+  .splash-features { flex-direction: column; gap: 20px; }
+  .splash-feature { width: auto; }
+}
+
+  .app { grid-template-columns: 1fr; }
+  .left-panel { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border-gold); }
+  .right-panel { padding: 24px 20px; }
+  header { padding: 0 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div class="splash" id="splash">
+  <div class="splash-lines">
+    <div class="splash-line"></div>
+    <div class="splash-line"></div>
+    <div class="splash-line"></div>
+    <div class="splash-line"></div>
+  </div>
+  <!-- Particles injected by JS -->
+  <div id="particles"></div>
+
+  <div class="splash-center">
+    <span class="splash-icon">🍸</span>
+    <div class="splash-logo">Shaker</div>
+    <div class="splash-divider"></div>
+
+    <div class="splash-features">
+      <div class="splash-feature">
+        <span class="splash-feature-icon">🥃</span>
+        <div class="splash-feature-title" id="sf1-title">Tell Us What You Have</div>
+        <div class="splash-feature-desc" id="sf1-desc">Select spirits, juices, and extras from your home bar</div>
+      </div>
+      <div class="splash-feature">
+        <span class="splash-feature-icon">✨</span>
+        <div class="splash-feature-title" id="sf2-title">We Find the Matches</div>
+        <div class="splash-feature-desc" id="sf2-desc">Instant recipes — perfect matches and almost-theres</div>
+      </div>
+      <div class="splash-feature">
+        <span class="splash-feature-icon">📖</span>
+        <div class="splash-feature-title" id="sf3-title">Mix Like a Pro</div>
+        <div class="splash-feature-desc" id="sf3-desc">Step-by-step instructions with bartender tips</div>
+      </div>
+    </div>
+
+    <div class="splash-tagline" id="splash-tagline">Your bar. Your cocktails. Tonight.</div>
+
+    <div class="splash-cta">
+      <button class="splash-btn" id="splash-btn" onclick="enterApp()">Enter</button>
+      <button class="splash-skip" onclick="enterApp()" id="splash-skip">Skip intro</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-name">Shaker</div>
+    <div class="logo-tagline" id="tagline">Home Cocktail Finder</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="noshake-toggle" id="noshake-btn" onclick="toggleNoShake()">
+      🥄 <span id="noshake-label">No Shaker</span>
+    </button>
+    <button class="tonight-btn" id="tonight-btn" onclick="showTonightPick()">
+      <span class="tonight-dice">🎲</span>
+      <span id="tonight-btn-label">Tonight's Pick</span>
+    </button>
+    <button class="menu-nav-btn" id="menu-nav-btn" onclick="toggleMenuView()">
+      <span>📋</span>
+      <span id="menu-nav-label">All Drinks</span>
+    </button>
+    <button class="fav-nav-btn" id="fav-nav-btn" onclick="toggleFavView()">
+      <span id="fav-nav-icon">♡</span>
+      <span id="fav-nav-label">Saved</span>
+      <span class="fav-nav-count" id="fav-nav-count" style="display:none">0</span>
+    </button>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title">What's in your bar?</div>
+      <div class="panel-sub" id="panel-sub">Select what you have and we'll find cocktails you can make tonight.</div>
+    </div>
+
+    <!-- Popular -->
+    <div class="popular-bar" style="margin: 20px 28px 0;">
+      <div class="popular-label" id="popular-label">🔥 Beginner Essentials</div>
+      <div class="popular-chips" id="popular-chips"></div>
+    </div>
+
+    <!-- Custom input -->
+    <div class="custom-input-wrap">
+      <input class="custom-input" id="custom-input" placeholder="Add other ingredient..." onkeydown="handleCustomKey(event)">
+      <button class="add-btn" onclick="addCustom()" id="add-btn-text">Add</button>
+    </div>
+
+    <!-- Categories -->
+    <div class="categories" id="categories"></div>
+
+    <!-- Selected + CTA -->
+    <div class="selected-summary">
+      <div class="selected-count" id="selected-count">0 INGREDIENTS SELECTED</div>
+      <div class="selected-tags" id="selected-tags"></div>
+      <button class="find-btn" id="find-btn" onclick="findCocktails()" disabled>
+        <span id="find-btn-text">Find My Cocktails</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel" id="right-panel">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🍸</div>
+      <div class="empty-title" id="empty-title">Your cocktails await</div>
+      <div class="empty-sub" id="empty-sub">Select at least 2 ingredients from the left to discover what you can make.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const categories = {
+  en: [
+    {
+      key: 'spirits',
+      label: 'Base Spirits',
+      items: ['Vodka','Gin','Rum','Tequila','Whiskey','Bourbon','Brandy','Triple Sec','Aperol','Campari']
+    },
+    {
+      key: 'juice',
+      label: 'Juices & Sodas',
+      items: ['Orange Juice','Lemon Juice','Lime Juice','Pineapple Juice','Cranberry Juice','Grapefruit Juice','Cola','Soda Water','Ginger Beer','Tonic Water']
+    },
+    {
+      key: 'sweet',
+      label: 'Sweeteners',
+      items: ['Simple Syrup','Honey','Grenadine','Agave Syrup','Sugar']
+    },
+    {
+      key: 'other',
+      label: 'Extras',
+      items: ['Mint','Lime','Lemon','Orange','Egg White','Cream','Coconut Cream','Bitters','Salt','Ice']
+    }
+  ],
+  zh: [
+    {
+      key: 'spirits',
+      label: '基酒',
+      items: ['伏特加','金酒','朗姆酒','龙舌兰','威士忌','波本威士忌','白兰地','君度橙酒','阿佩罗','金巴利']
+    },
+    {
+      key: 'juice',
+      label: '果汁 & 苏打',
+      items: ['橙汁','柠檬汁','青柠汁','菠萝汁','蔓越莓汁','葡萄柚汁','可乐','苏打水','姜汁啤酒','汤力水']
+    },
+    {
+      key: 'sweet',
+      label: '甜味剂',
+      items: ['糖浆','蜂蜜','石榴糖浆','龙舌兰糖浆','白糖']
+    },
+    {
+      key: 'other',
+      label: '其他',
+      items: ['薄荷','青柠','柠檬','橙子','蛋清','淡奶油','椰奶','苦精','盐','冰块']
+    }
+  ],
+  ja: [
+    {
+      key: 'spirits',
+      label: 'ベーススピリッツ',
+      items: ['ウォッカ','ジン','ラム','テキーラ','ウイスキー','バーボン','ブランデー','トリプルセック','アペロール','カンパリ']
+    },
+    {
+      key: 'juice',
+      label: 'ジュース・ソーダ',
+      items: ['オレンジジュース','レモンジュース','ライムジュース','パイナップルジュース','クランベリージュース','グレープフルーツジュース','コーラ','ソーダウォーター','ジンジャービア','トニックウォーター']
+    },
+    {
+      key: 'sweet',
+      label: '甘味料',
+      items: ['シンプルシロップ','ハチミツ','グレナデン','アガベシロップ','砂糖']
+    },
+    {
+      key: 'other',
+      label: 'その他',
+      items: ['ミント','ライム','レモン','オレンジ','卵白','クリーム','ココナッツクリーム','ビターズ','塩','氷']
+    }
+  ]
+};
+
+const popular = {
+  en: ['Vodka','Orange Juice','Lemon Juice','Lime Juice','Simple Syrup','Soda Water','Gin','Rum','Honey','Mint'],
+  zh: ['伏特加','橙汁','柠檬汁','青柠汁','糖浆','苏打水','金酒','朗姆酒','蜂蜜','薄荷'],
+  ja: ['ウォッカ','オレンジジュース','レモンジュース','ライムジュース','シンプルシロップ','ソーダウォーター','ジン','ラム','ハチミツ','ミント']
+};
+
+// Ingredient name mapping EN <-> ZH
+const ingMap = {
+  'Vodka':'伏特加','Gin':'金酒','Rum':'朗姆酒','Tequila':'龙舌兰','Whiskey':'威士忌',
+  'Bourbon':'波本威士忌','Brandy':'白兰地','Triple Sec':'君度橙酒','Aperol':'阿佩罗','Campari':'金巴利',
+  'Orange Juice':'橙汁','Lemon Juice':'柠檬汁','Lime Juice':'青柠汁','Pineapple Juice':'菠萝汁',
+  'Cranberry Juice':'蔓越莓汁','Grapefruit Juice':'葡萄柚汁','Cola':'可乐','Soda Water':'苏打水',
+  'Ginger Beer':'姜汁啤酒','Tonic Water':'汤力水','Simple Syrup':'糖浆','Honey':'蜂蜜',
+  'Grenadine':'石榴糖浆','Agave Syrup':'龙舌兰糖浆','Sugar':'白糖','Mint':'薄荷','Lime':'青柠',
+  'Lemon':'柠檬','Orange':'橙子','Egg White':'蛋清','Cream':'淡奶油','Coconut Cream':'椰奶',
+  'Bitters':'苦精','Salt':'盐','Ice':'冰块'
+};
+
+const ingMapJa = {
+  'Vodka':'ウォッカ','Gin':'ジン','Rum':'ラム','Tequila':'テキーラ','Whiskey':'ウイスキー',
+  'Bourbon':'バーボン','Brandy':'ブランデー','Triple Sec':'トリプルセック','Aperol':'アペロール','Campari':'カンパリ',
+  'Orange Juice':'オレンジジュース','Lemon Juice':'レモンジュース','Lime Juice':'ライムジュース','Pineapple Juice':'パイナップルジュース',
+  'Cranberry Juice':'クランベリージュース','Grapefruit Juice':'グレープフルーツジュース','Cola':'コーラ','Soda Water':'ソーダウォーター',
+  'Ginger Beer':'ジンジャービア','Tonic Water':'トニックウォーター','Simple Syrup':'シンプルシロップ','Honey':'ハチミツ',
+  'Grenadine':'グレナデン','Agave Syrup':'アガベシロップ','Sugar':'砂糖','Mint':'ミント','Lime':'ライム',
+  'Lemon':'レモン','Orange':'オレンジ','Egg White':'卵白','Cream':'クリーム','Coconut Cream':'ココナッツクリーム',
+  'Bitters':'ビターズ','Salt':'塩','Ice':'氷'
+};
+
+// Build reverse map
+const ingMapReverse = {};
+Object.entries(ingMap).forEach(([en,zh]) => { ingMapReverse[zh] = en; });
+Object.entries(ingMapJa).forEach(([en,ja]) => { ingMapReverse[ja] = en; });
+
+function toEn(name) { return ingMapReverse[name] || name; }
+function toZh(name) { return ingMap[name] || name; }
+function toJa(name) { return ingMapJa[name] || name; }
+function displayIngredient(name) {
+  if (currentLang === 'zh') return toZh(name) || name;
+  if (currentLang === 'ja') return toJa(name) || name;
+  return name;
+}
+
+// Cocktail database
+const cocktails = [
+  {
+    id: 1, emoji: '🍊',
+    name: 'Screwdriver', nameZh: '螺丝刀',
+    method: 'build',
+    ingredients: ['Vodka','Orange Juice'],
+    difficulty: 1,
+    steps: {
+      en: ['Fill a glass with ice cubes.','Pour 2 oz vodka over the ice.','Top with 4 oz fresh orange juice.','Stir gently and garnish with an orange slice.'],
+      zh: ['玻璃杯中加入冰块。','倒入60ml伏特加。','加入120ml新鲜橙汁。','轻轻搅拌，用橙片装饰。']
+    },
+    tip: { en: 'Use freshly squeezed OJ for a noticeably better taste.', zh: '使用新鲜榨取的橙汁，口感会明显更好。' }
+  },
+  {
+    id: 2, emoji: '🌿',
+    name: 'Mojito', nameZh: '莫吉托',
+    method: 'build',
+    ingredients: ['Rum','Lime Juice','Simple Syrup','Mint','Soda Water'],
+    difficulty: 2,
+    steps: {
+      en: ['Muddle 8–10 mint leaves with 1 oz simple syrup in a glass.','Add 2 oz white rum and 1 oz fresh lime juice.','Fill the glass with crushed ice.','Top with soda water and stir gently.','Garnish with a mint sprig and lime wheel.'],
+      zh: ['在杯中将8-10片薄荷叶与30ml糖浆轻轻捣碎。','加入60ml白朗姆酒和30ml新鲜青柠汁。','填满碎冰。','倒入苏打水并轻轻搅拌。','用薄荷枝和青柠片装饰。']
+    },
+    tip: { en: 'Muddle gently — you want the oils from the mint, not the bitterness from the stems.', zh: '轻柔捣压薄荷，目的是释放叶片精油，而非压碎茎部带出苦味。' }
+  },
+  {
+    id: 3, emoji: '🍋',
+    name: 'Whiskey Sour', nameZh: '威士忌酸',
+    method: 'shake',
+    ingredients: ['Whiskey','Lemon Juice','Simple Syrup','Egg White'],
+    difficulty: 2,
+    steps: {
+      en: ['Add 2 oz whiskey, 1 oz lemon juice, 0.75 oz simple syrup, and 1 egg white to a shaker.','Dry shake (no ice) vigorously for 15 seconds to emulsify the egg white.','Add ice and shake again for another 15 seconds.','Double-strain into a chilled coupe glass.','Garnish with a few drops of bitters on the foam.'],
+      zh: ['将60ml威士忌、30ml柠檬汁、22ml糖浆和1个蛋清加入摇酒壶。','不加冰先干摇15秒，让蛋清充分乳化。','加冰再摇15秒。','双重过滤倒入冰镇的高脚杯。','在泡沫上滴几滴苦精装饰。']
+    },
+    tip: { en: 'The dry shake is the secret to a thick, lasting foam on top.', zh: '干摇是产生厚实持久泡沫的关键步骤，不要跳过。' }
+  },
+  {
+    id: 4, emoji: '🌅',
+    name: 'Tequila Sunrise', nameZh: '龙舌兰日出',
+    method: 'build',
+    ingredients: ['Tequila','Orange Juice','Grenadine'],
+    difficulty: 1,
+    steps: {
+      en: ['Fill a tall glass with ice.','Pour 2 oz tequila and 4 oz orange juice, then stir.','Slowly pour 0.5 oz grenadine down the side of the glass — do not stir.','Watch the sunrise gradient appear!'],
+      zh: ['高杯中装满冰块。','倒入60ml龙舌兰和120ml橙汁，搅拌。','沿杯壁缓慢倒入15ml石榴糖浆，不要搅拌。','欣赏美丽的日出渐变色！']
+    },
+    tip: { en: 'Pour the grenadine slowly and resist the urge to stir — the gradient is the whole point.', zh: '石榴糖浆要缓慢倒入，忍住不搅拌，渐变色才是这杯酒的灵魂。' }
+  },
+  {
+    id: 5, emoji: '🍸',
+    name: 'Gin & Tonic', nameZh: '金汤力',
+    method: 'build',
+    ingredients: ['Gin','Tonic Water'],
+    difficulty: 1,
+    steps: {
+      en: ['Fill a large glass (preferably balloon glass) with ice.','Pour 2 oz gin over the ice.','Pour 4 oz tonic water slowly down a bar spoon to preserve the fizz.','Garnish with a lime wedge or cucumber slice.'],
+      zh: ['大杯（最好是气球杯）中装满冰块。','倒入60ml金酒。','沿调酒勺缓慢倒入120ml汤力水以保留气泡。','用青柠角或黄瓜片装饰。']
+    },
+    tip: { en: 'Premium tonic water makes a huge difference here. Try Fever-Tree or Q Tonic.', zh: '优质汤力水影响巨大，推荐Fever-Tree或Q Tonic品牌。' }
+  },
+  {
+    id: 6, emoji: '🍹',
+    name: 'Moscow Mule', nameZh: '莫斯科骡子',
+    method: 'build',
+    ingredients: ['Vodka','Ginger Beer','Lime Juice'],
+    difficulty: 1,
+    steps: {
+      en: ['Fill a copper mug with ice (copper mug is traditional, but any glass works).','Add 2 oz vodka and 0.75 oz fresh lime juice.','Top with 4–6 oz ginger beer.','Stir gently and garnish with a lime wedge and mint.'],
+      zh: ['铜杯中装满冰块（传统用铜杯，但普通玻璃杯也可以）。','加入60ml伏特加和22ml新鲜青柠汁。','倒入120-180ml姜汁啤酒。','轻轻搅拌，用青柠角和薄荷装饰。']
+    },
+    tip: { en: 'A copper mug keeps the drink colder longer and is part of the classic experience.', zh: '铜杯能让饮料保持更长时间的冰凉，也是这杯酒经典体验的一部分。' }
+  },
+  {
+    id: 7, emoji: '🏝️',
+    name: 'Piña Colada', nameZh: '椰林飘香',
+    method: 'blend',
+    ingredients: ['Rum','Pineapple Juice','Coconut Cream'],
+    difficulty: 2,
+    steps: {
+      en: ['Add 2 oz white rum, 4 oz pineapple juice, and 2 oz coconut cream to a blender.','Add a cup of ice.','Blend until smooth and creamy.','Pour into a chilled glass and garnish with a pineapple slice and cherry.'],
+      zh: ['将60ml白朗姆酒、120ml菠萝汁和60ml椰奶加入搅拌机。','加入一杯冰块。','搅拌至顺滑细腻。','倒入冰镇玻璃杯，用菠萝片和樱桃装饰。']
+    },
+    tip: { en: 'Use frozen pineapple chunks instead of fresh for a thicker, colder result.', zh: '使用冷冻菠萝块代替新鲜菠萝，成品会更浓稠更冰凉。' }
+  },
+  {
+    id: 8, emoji: '🍊',
+    name: 'Aperol Spritz', nameZh: '阿佩罗气泡酒',
+    method: 'build',
+    ingredients: ['Aperol','Soda Water','Orange'],
+    difficulty: 1,
+    steps: {
+      en: ['Fill a large wine glass with ice.','Pour 2 oz Aperol.','Add 3 oz prosecco (or soda water as substitute).','Add a splash of soda water.','Garnish with an orange slice.'],
+      zh: ['大号红酒杯中装满冰块。','倒入60ml阿佩罗。','加入90ml普罗塞克（或以苏打水替代）。','加少量苏打水。','用橙片装饰。']
+    },
+    tip: { en: 'The classic ratio is 3:2:1 — prosecco: Aperol: soda. Adjust to your sweetness preference.', zh: '经典比例是3:2:1 — 普罗塞克:阿佩罗:苏打水，可根据甜度偏好调整。' }
+  },
+  {
+    id: 9, emoji: '🌶️',
+    name: 'Paloma', nameZh: '帕洛玛',
+    method: 'build',
+    ingredients: ['Tequila','Grapefruit Juice','Lime Juice','Salt','Soda Water'],
+    difficulty: 1,
+    steps: {
+      en: ['Rim a glass with salt by running a lime around the edge and dipping in salt.','Fill glass with ice.','Add 2 oz tequila, 2 oz fresh grapefruit juice, and 0.5 oz lime juice.','Top with soda water and stir gently.','Garnish with a grapefruit wedge.'],
+      zh: ['用青柠擦拭杯口，然后蘸盐做盐边。','杯中加冰。','加入60ml龙舌兰、60ml新鲜葡萄柚汁和15ml青柠汁。','倒入苏打水轻轻搅拌。','用葡萄柚角装饰。']
+    },
+    tip: { en: 'More popular than Margarita in Mexico. Fresh grapefruit juice is non-negotiable.', zh: '这款酒在墨西哥比玛格丽特更受欢迎。一定要用新鲜葡萄柚汁。' }
+  },
+  {
+    id: 10, emoji: '🫐',
+    name: "Bee's Knees", nameZh: '蜂膝鸡尾酒',
+    method: 'shake',
+    ingredients: ['Gin','Lemon Juice','Honey'],
+    difficulty: 2,
+    steps: {
+      en: ["Make honey syrup: mix equal parts honey and warm water, stir until dissolved.",'Add 2 oz gin, 0.75 oz lemon juice, and 0.75 oz honey syrup to a shaker with ice.','Shake vigorously for 15 seconds.','Double-strain into a chilled coupe glass.','Garnish with a lemon twist.'],
+      zh: ['制作蜂蜜糖浆：等比例蜂蜜与温水混合搅拌至溶解。','将60ml金酒、22ml柠檬汁和22ml蜂蜜糖浆加冰放入摇酒壶。','用力摇15秒。','双重过滤倒入冰镇的高脚杯。','用柠檬皮装饰。']
+    },
+    tip: { en: 'A Prohibition-era classic. The honey should complement the gin botanicals, not overpower them.', zh: '这是一款禁酒令时期的经典鸡尾酒。蜂蜜应衬托金酒的植物香气，而非压制它。' }
+  },
+  {
+    id: 11, emoji: '🍫',
+    name: 'White Russian', nameZh: '白俄罗斯',
+    method: 'build',
+    ingredients: ['Vodka','Cream'],
+    difficulty: 1,
+    steps: {
+      en: ['Fill an old fashioned glass with ice.','Pour 2 oz vodka and 1 oz coffee liqueur (or substitute with strong cold brew + simple syrup).','Float 1 oz heavy cream on top by pouring over the back of a spoon.','Do not stir — let the layers mix as you drink.'],
+      zh: ['古典杯中加冰。','倒入60ml伏特加和30ml咖啡利口酒（可用浓缩冷萃咖啡+糖浆代替）。','用勺背将30ml淡奶油缓慢倒在表面。','不要搅拌，让各层在饮用时自然融合。']
+    },
+    tip: { en: 'The Dude approves. Use high-fat cream for the best float effect.', zh: '《大勒博斯基》主角的最爱。使用高脂奶油效果最佳。' }
+  },
+  {
+    id: 12, emoji: '🌊',
+    name: 'Tom Collins', nameZh: '汤姆柯林斯',
+    method: 'shake',
+    ingredients: ['Gin','Lemon Juice','Simple Syrup','Soda Water'],
+    difficulty: 1,
+    steps: {
+      en: ['Add 2 oz gin, 1 oz lemon juice, and 0.5 oz simple syrup to a shaker with ice.','Shake well for 10 seconds.','Strain into a tall glass filled with ice.','Top with 2–3 oz soda water.','Garnish with a lemon slice and cherry.'],
+      zh: ['将60ml金酒、30ml柠檬汁和15ml糖浆加冰放入摇酒壶。','摇晃10秒。','过滤倒入装满冰的高杯。','加60-90ml苏打水。','用柠檬片和樱桃装饰。']
+    },
+    tip: { en: 'A warm-weather classic. The balance of sour and sweet is key — taste and adjust.', zh: '夏日经典。酸甜平衡是关键，根据口味调整用量。' }
+  },
+
+  // ── COMPETITION WINNERS ───────────────────────────────────────────────────
+  {
+    id: 101, emoji: '🏆',
+    name: 'Venceremos', nameZh: '我们终将胜利',
+    competition: 'Bacardi Legacy Global 2016 🥇',
+    competitionZh: '百加得传世鸡尾酒大赛 2016 全球冠军 🥇',
+    method: 'shake',
+    ingredients: ['Rum','Coconut Cream','Pineapple Juice','Cucumber Juice','Lime Juice','Sesame Oil'],
+    difficulty: 2,
+    steps: {
+      en: [
+        'Add 45ml white rum, 15ml coconut liqueur, 25ml pineapple juice, 15ml fresh cucumber juice, and 5ml fresh lime juice into a cocktail shaker with ice.',
+        'Add 1 dash of sesame oil.',
+        'Shake all ingredients well with ice.',
+        'Strain into a Hurricane or rocks glass filled with fresh ice.',
+        'Garnish with fresh pineapple leaves.'
+      ],
+      zh: [
+        '将45ml白朗姆酒、15ml椰子利口酒、25ml菠萝汁、15ml新鲜黄瓜汁和5ml新鲜青柠汁加入装有冰块的摇酒壶。',
+        '加入1滴麻油。',
+        '用力摇晃所有材料。',
+        '过滤倒入装有新鲜冰块的飓风杯或岩石杯。',
+        '用新鲜菠萝叶装饰。'
+      ]
+    },
+    tip: {
+      en: 'Created by Taiwanese-American bartender Gn Chan at Angel\'s Share, NYC. The sesame oil is the secret — just 1 dash adds an earthy, savory depth that ties everything together. "Venceremos" means "we will overcome" in Spanish.',
+      zh: '由台裔美国调酒师詹佳恩（Gn Chan）在纽约Angel\'s Share酒吧创作。麻油是秘诀——只需1滴就能增添泥土气息和咸鲜层次。这款酒的灵感来自椰林飘香，融入了黄瓜和麻油两种亚洲食材，代表他的文化背景。'
+    }
+  },
+  {
+    id: 102, emoji: '🏆',
+    name: 'Rising to the Sky', nameZh: '直上云霄',
+    competition: 'Diageo World Class Global 2010 🥇',
+    competitionZh: 'Diageo世界级调酒大赛 2010 全球冠军 🥇',
+    method: 'shake',
+    ingredients: ['Gin','Pineapple Juice','Lime Juice','Honey'],
+    difficulty: 2,
+    steps: {
+      en: [
+        'Make fino sherry and yuzu cordial in advance: combine 60ml fino sherry with 30ml yuzu juice and 20ml honey, stir until honey dissolves.',
+        'Add 50ml gin, 25ml fresh pineapple juice, 15ml fresh lime juice, and 25ml of the sherry-yuzu cordial into a shaker with ice.',
+        'Shake vigorously for 15 seconds.',
+        'Fine strain into a chilled coupe glass.',
+        'Garnish with a fresh coriander sprig.'
+      ],
+      zh: [
+        '提前制作雪莉柚子糖浆：将60ml菲诺雪莉酒与30ml柚子汁和20ml蜂蜜混合，搅拌至蜂蜜溶解。',
+        '将50ml金酒、25ml新鲜菠萝汁、15ml新鲜青柠汁和25ml雪莉柚子糖浆加冰放入摇酒壶。',
+        '用力摇晃15秒。',
+        '细筛过滤倒入冰镇的碟形香槟杯。',
+        '用新鲜香菜枝装饰。'
+      ]
+    },
+    tip: {
+      en: 'Created by Erik Lorincz of The Connaught Bar, London. If you can\'t find fino sherry or yuzu, substitute dry white vermouth and a mix of grapefruit + lime juice. The coriander garnish is essential — it changes the aroma with every sip.',
+      zh: '由伦敦Connaught酒吧的Erik Lorincz创作。如果找不到菲诺雪莉酒或柚子，可以用干白苦艾酒替代雪莉，葡萄柚汁+青柠汁替代柚子。香菜装饰非常重要，它会改变每口的香气体验。'
+    }
+  },
+  {
+    id: 103, emoji: '🏆',
+    name: 'Le Latin', nameZh: '拉丁风情',
+    competition: 'Bacardi Legacy Global 2015 🥇',
+    competitionZh: '百加得传世鸡尾酒大赛 2015 全球冠军 🥇',
+    method: 'shake',
+    ingredients: ['Rum','Lime Juice','Simple Syrup','Mint','Soda Water'],
+    difficulty: 2,
+    steps: {
+      en: [
+        'In a shaker, gently muddle 8 fresh mint leaves with 20ml simple syrup.',
+        'Add 50ml white rum and 25ml fresh lime juice.',
+        'Add ice and shake hard for 12 seconds.',
+        'Double strain into a chilled coupe glass — no ice in the glass.',
+        'Top with a small splash of chilled soda water.',
+        'Garnish with a single mint leaf and a lime twist.'
+      ],
+      zh: [
+        '在摇酒壶中轻柔捣压8片新鲜薄荷叶与20ml糖浆。',
+        '加入50ml白朗姆酒和25ml新鲜青柠汁。',
+        '加冰用力摇晃12秒。',
+        '双重过滤倒入冰镇的碟形香槟杯——杯中不放冰。',
+        '加少量冰镇苏打水。',
+        '用一片薄荷叶和青柠皮装饰。'
+      ]
+    },
+    tip: {
+      en: 'Created by Franck Dedieu of Redwood Bar, Lyon, France. This is essentially a refined Daiquiri with mint. The key difference from a Mojito: it\'s shaken and served up (no ice in glass), giving it a more elegant, concentrated flavor.',
+      zh: '由法国里昂Redwood Bar的Franck Dedieu创作。本质上是加了薄荷的精致大吉利。与莫吉托的关键区别：它是摇制后过滤上杯（不含冰块），使风味更优雅、更集中。'
+    }
+  }
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentLang = 'en';
+let selectedIngredients = new Set();
+let favorites = new Set();
+let showingFavs = false;
+let noShakeMode = false;
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function init() {
+  renderCategories();
+  renderPopular();
+  updateSelectedUI();
+}
+
+// ── LANG ──────────────────────────────────────────────────────────────────────
+const t = {
+  en: {
+    tagline: 'Home Cocktail Finder',
+    panelTitle: "What's in your bar?",
+    panelSub: "Select what you have and we'll find cocktails you can make tonight.",
+    popularLabel: '🔥 Beginner Essentials',
+    addBtn: 'Add',
+    addPlaceholder: 'Add other ingredient...',
+    findBtn: 'Find My Cocktails',
+    selectedCount: n => `${n} INGREDIENT${n !== 1 ? 'S' : ''} SELECTED`,
+    emptyTitle: 'Your cocktails await',
+    emptySub: 'Select at least 2 ingredients from the left to discover what you can make.',
+    resultsTitle: n => `${n} cocktail${n !== 1 ? 's' : ''} found`,
+    perfectMatch: 'PERFECT MATCH',
+    almostThere: 'ALMOST THERE',
+    missing: m => `Missing: ${m}`,
+    difficulty: d => d === 1 ? '★☆☆ Easy' : d === 2 ? '★★☆ Medium' : '★★★ Advanced',
+    ingredients: 'Ingredients',
+    instructions: 'Instructions',
+    barTip: '🍋 Bar Tip',
+    close: '✕',
+    loading: 'Shaking things up...',
+    saved: 'Saved',
+    saveBtn: '♡  Save Recipe',
+    savedBtn: '♥  Saved',
+    favTitle: 'Saved Recipes',
+    favEmpty: 'No saved recipes yet',
+    favEmptySub: 'Hit the ♡ on any recipe card to save it here.',
+    tonightBtn: "Tonight's Pick",
+    menuBtn: 'All Drinks',
+    noShakeBtn: 'No Shaker',
+    connectionErrorTitle: 'Connection error',
+    connectionErrorSub: 'Could not reach the recipe database. Please check your connection.',
+    noMatchesTitle: 'No matches found',
+    noMatchesSub: 'Try adding more ingredients, even basics like lemon juice or soda water unlock many cocktails.',
+    couldNotLoadRecipe: 'Could not load recipe.',
+    source: 'Source',
+    type: 'Type',
+    glass: 'Glass',
+    unknown: 'Unknown',
+    readiness: 'Your readiness',
+    ingredientsUnit: 'ingredients',
+    tonightLabel: "🎲 Tonight's Pick",
+    viewRecipe: 'View Recipe',
+    reroll: '🎲 Reroll',
+    menuLoadingMore: 'Loading more...',
+    allDrinks: 'All Drinks',
+    drinksUnit: 'drinks',
+    menuSearchPlaceholder: 'Search by name or ingredient...',
+    menuNoMatch: 'No drinks match your search.',
+    canMake: 'Can make',
+    missingShort: m => `Missing: ${m}`,
+    haveShort: 'have',
+    menuFilters: { all:'All Drinks', canMake:'Can Make Now', almost:'Almost There', comp:'🏆 Competition', noShake:'🥄 No Shaker' }
+  },
+  zh: {
+    tagline: '家庭调酒探索器',
+    panelTitle: '你家有什么？',
+    panelSub: '选择你拥有的材料，我们帮你找出今晚能调的鸡尾酒。',
+    popularLabel: '🔥 新手必备材料',
+    addBtn: '添加',
+    addPlaceholder: '添加其他材料...',
+    findBtn: '发现我能调的酒',
+    selectedCount: n => `已选择 ${n} 种材料`,
+    emptyTitle: '你的鸡尾酒在等你',
+    emptySub: '从左侧选择至少2种材料，发现你能调制的鸡尾酒。',
+    resultsTitle: n => `找到 ${n} 款鸡尾酒`,
+    perfectMatch: '完全匹配',
+    almostThere: '差一点点',
+    missing: m => `缺少：${m}`,
+    difficulty: d => d === 1 ? '★☆☆ 简单' : d === 2 ? '★★☆ 中等' : '★★★ 进阶',
+    ingredients: '所需材料',
+    instructions: '调制步骤',
+    barTip: '🍋 调酒小贴士',
+    close: '✕',
+    loading: '正在为你调酒...',
+    saved: '收藏',
+    saveBtn: '♡  收藏配方',
+    savedBtn: '♥  已收藏',
+    favTitle: '我的收藏',
+    favEmpty: '还没有收藏',
+    favEmptySub: '点击任意食谱卡片上的 ♡ 即可收藏。',
+    tonightBtn: '今晚推荐',
+    menuBtn: '全部酒单',
+    noShakeBtn: '免摇酒壶',
+    connectionErrorTitle: '连接错误',
+    connectionErrorSub: '无法连接到食谱数据库，请检查网络连接。',
+    noMatchesTitle: '暂无匹配',
+    noMatchesSub: '尝试添加更多材料，即使是柠檬汁或苏打水这类基础材料也能解锁很多鸡尾酒。',
+    couldNotLoadRecipe: '无法加载食谱。',
+    source: '来源',
+    type: '类型',
+    glass: '杯型',
+    unknown: '未知',
+    readiness: '你的备料进度',
+    ingredientsUnit: '种材料',
+    tonightLabel: '🎲 今晚推荐',
+    viewRecipe: '查看配方',
+    reroll: '🎲 换一款',
+    menuLoadingMore: '加载中…',
+    allDrinks: '全部酒单',
+    drinksUnit: '款',
+    menuSearchPlaceholder: '按名字或材料搜索…',
+    menuNoMatch: '没有找到匹配的鸡尾酒。',
+    canMake: '可以调',
+    missingShort: m => `缺：${m}`,
+    haveShort: '已有',
+    menuFilters: { all:'全部酒单', canMake:'现在可以调', almost:'差一点点', comp:'🏆 比赛获奖', noShake:'🥄 免摇酒壶' }
+  },
+  ja: {
+    tagline: 'ホームカクテルファインダー',
+    panelTitle: '手元にある材料は？',
+    panelSub: '持っている材料を選ぶと、今夜作れるカクテルを見つけます。',
+    popularLabel: '🔥 初心者向け定番',
+    addBtn: '追加',
+    addPlaceholder: 'ほかの材料を追加...',
+    findBtn: '作れるカクテルを探す',
+    selectedCount: n => `${n}個の材料を選択中`,
+    emptyTitle: 'カクテルがあなたを待っています',
+    emptySub: '左側から2つ以上の材料を選んで、作れるカクテルを見つけましょう。',
+    resultsTitle: n => `${n}件のカクテル`,
+    perfectMatch: 'ぴったり一致',
+    almostThere: 'あと少し',
+    missing: m => `不足: ${m}`,
+    difficulty: d => d === 1 ? '★☆☆ かんたん' : d === 2 ? '★★☆ ふつう' : '★★★ 上級',
+    ingredients: '材料',
+    instructions: '作り方',
+    barTip: '🍋 バーテンダーのコツ',
+    close: '✕',
+    loading: 'シェイク中...',
+    saved: '保存済み',
+    saveBtn: '♡  レシピを保存',
+    savedBtn: '♥  保存済み',
+    favTitle: '保存したレシピ',
+    favEmpty: 'まだ保存したレシピはありません',
+    favEmptySub: 'レシピカードの ♡ を押すとここに保存されます。',
+    tonightBtn: '今夜の1杯',
+    menuBtn: '全ドリンク',
+    noShakeBtn: 'シェイカーなし',
+    connectionErrorTitle: '接続エラー',
+    connectionErrorSub: 'レシピデータベースに接続できませんでした。通信状況を確認してください。',
+    noMatchesTitle: '一致する結果がありません',
+    noMatchesSub: '材料を増やしてみてください。レモンジュースやソーダなどの基本材料でも作れる種類が増えます。',
+    couldNotLoadRecipe: 'レシピを読み込めませんでした。',
+    source: '出典',
+    type: 'タイプ',
+    glass: 'グラス',
+    unknown: '不明',
+    readiness: '準備状況',
+    ingredientsUnit: '材料',
+    tonightLabel: '🎲 今夜の1杯',
+    viewRecipe: 'レシピを見る',
+    reroll: '🎲 もう一度',
+    menuLoadingMore: 'さらに読み込み中...',
+    allDrinks: '全ドリンク',
+    drinksUnit: '件',
+    menuSearchPlaceholder: '名前または材料で検索...',
+    menuNoMatch: '検索条件に一致するカクテルがありません。',
+    canMake: '作れる',
+    missingShort: m => `不足: ${m}`,
+    haveShort: '所持',
+    menuFilters: { all:'全ドリンク', canMake:'今作れる', almost:'あと少し', comp:'🏆 大会受賞', noShake:'🥄 シェイカーなし' }
+  }
+};
+
+function setLang(lang) {
+  currentLang = 'en';
+  const btnEn = document.getElementById('btn-en');
+  if (btnEn) btnEn.classList.add('active');
+
+  const tx = t.en;
+  document.getElementById('tagline').textContent = tx.tagline;
+  document.getElementById('panel-title').textContent = tx.panelTitle;
+  document.getElementById('panel-sub').textContent = tx.panelSub;
+  document.getElementById('popular-label').textContent = tx.popularLabel;
+  document.getElementById('add-btn-text').textContent = tx.addBtn;
+  document.getElementById('custom-input').placeholder = tx.addPlaceholder;
+  document.getElementById('find-btn-text').textContent = tx.findBtn;
+  document.getElementById('empty-title').textContent = tx.emptyTitle;
+  document.getElementById('empty-sub').textContent = tx.emptySub;
+  document.getElementById('fav-nav-label').textContent = tx.saved;
+  document.getElementById('noshake-label').textContent = tx.noShakeBtn;
+  document.getElementById('tonight-btn-label').textContent = tx.tonightBtn;
+  document.getElementById('menu-nav-label').textContent = tx.menuBtn;
+  applySplashText();
+
+  renderCategories();
+  renderPopular();
+  updateSelectedUI();
+
+  const rp = document.getElementById('right-panel');
+  if (!rp.querySelector('.empty-state') && !rp.querySelector('.loading')) {
+    findCocktails();
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderCategories() {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  categories[currentLang].forEach(cat => {
+    const div = document.createElement('div');
+    div.className = 'category';
+    div.innerHTML = `<div class="cat-title">${cat.label}</div><div class="ingredients-grid" id="cat-${cat.key}"></div>`;
+    container.appendChild(div);
+    const grid = div.querySelector(`#cat-${cat.key}`);
+    cat.items.forEach(item => {
+      const enName = toEn(item);
+      const btn = document.createElement('button');
+      btn.className = 'ingredient-tag' + (selectedIngredients.has(enName) ? ' selected' : '');
+      btn.textContent = item;
+      btn.onclick = () => toggleIngredient(enName, btn);
+      grid.appendChild(btn);
+    });
+  });
+}
+
+function renderPopular() {
+  const container = document.getElementById('popular-chips');
+  container.innerHTML = '';
+  popular[currentLang].forEach(item => {
+    const enName = toEn(item);
+    const btn = document.createElement('button');
+    btn.className = 'popular-chip' + (selectedIngredients.has(enName) ? ' selected' : '');
+    btn.textContent = item;
+    btn.onclick = () => {
+      toggleIngredient(enName, null);
+      btn.classList.toggle('selected', selectedIngredients.has(enName));
+      renderCategories();
+      updateSelectedUI();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function toggleIngredient(enName, btn) {
+  if (selectedIngredients.has(enName)) {
+    selectedIngredients.delete(enName);
+  } else {
+    selectedIngredients.add(enName);
+  }
+  if (btn) btn.classList.toggle('selected', selectedIngredients.has(enName));
+  renderPopular();
+  updateSelectedUI();
+}
+
+function addCustom() {
+  const input = document.getElementById('custom-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const enName = toEn(val) || val;
+  selectedIngredients.add(enName);
+  input.value = '';
+  renderCategories();
+  renderPopular();
+  updateSelectedUI();
+}
+
+function handleCustomKey(e) {
+  if (e.key === 'Enter') addCustom();
+}
+
+function updateSelectedUI() {
+  const tx = t[currentLang];
+  const count = selectedIngredients.size;
+  document.getElementById('selected-count').textContent = tx.selectedCount(count);
+  document.getElementById('find-btn').disabled = count < 2;
+
+  const tagsEl = document.getElementById('selected-tags');
+  tagsEl.innerHTML = '';
+  selectedIngredients.forEach(enName => {
+    const displayName = displayIngredient(enName);
+    const pill = document.createElement('div');
+    pill.className = 'selected-pill';
+    pill.innerHTML = `${displayName}<span class="remove-pill" onclick="removeIngredient('${enName}')">×</span>`;
+    tagsEl.appendChild(pill);
+  });
+}
+
+function removeIngredient(enName) {
+  selectedIngredients.delete(enName);
+  renderCategories();
+  renderPopular();
+  updateSelectedUI();
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+const API = 'https://www.thecocktaildb.com/api/json/v1/1';
+
+// Cache to avoid redundant API calls
+const apiCache = {};
+
+async function fetchByIngredient(ingredient) {
+  if (apiCache[ingredient]) return apiCache[ingredient];
+  try {
+    const res = await fetch(`${API}/filter.php?i=${encodeURIComponent(ingredient)}`);
+    const data = await res.json();
+    const drinks = data.drinks || [];
+    apiCache[ingredient] = drinks;
+    return drinks;
+  } catch { return []; }
+}
+
+async function fetchDetails(id) {
+  if (apiCache[`detail_${id}`]) return apiCache[`detail_${id}`];
+  try {
+    const res = await fetch(`${API}/lookup.php?i=${id}`);
+    const data = await res.json();
+    const drink = data.drinks?.[0] || null;
+    apiCache[`detail_${id}`] = drink;
+    return drink;
+  } catch { return null; }
+}
+
+// Parse a raw API drink into our card format
+function parseDrink(raw) {
+  // Extract ingredients list from API's strIngredient1..15 fields
+  const ingredients = [];
+  for (let i = 1; i <= 15; i++) {
+    const ing = raw[`strIngredient${i}`];
+    if (ing && ing.trim()) ingredients.push(ing.trim());
+  }
+
+  // Pick an emoji based on category
+  const cat = (raw.strCategory || '').toLowerCase();
+  const emojiMap = {
+    'cocktail': '🍸', 'shot': '🥃', 'punch': '🍹',
+    'beer': '🍺', 'soft drink': '🥤', 'cocoa': '☕',
+    'shake': '🥛', 'other': '🍶'
+  };
+  const emoji = Object.entries(emojiMap).find(([k]) => cat.includes(k))?.[1] || '🍹';
+
+  return {
+    id: raw.idDrink,
+    name: raw.strDrinkThumb ? raw.strDrink : raw.strDrink,
+    nameZh: raw.strDrink, // fallback; we'll translate known ones
+    emoji,
+    thumbnail: raw.strDrinkThumb,
+    ingredients,
+    difficulty: ingredients.length <= 3 ? 1 : ingredients.length <= 5 ? 2 : 3,
+    stepsRaw: raw.strInstructions || '',
+    isApiDrink: true,
+    missing: []
+  };
+}
+
+// ── MATCHING ──────────────────────────────────────────────────────────────────
+async function findCocktails() {
+  const rp = document.getElementById('right-panel');
+  rp.innerHTML = `<div class="loading"><div class="loading-spinner"></div><div class="loading-text">${t[currentLang].loading}</div></div>`;
+
+  const ingredients = Array.from(selectedIngredients);
+  const have = ingredients.map(i => i.toLowerCase());
+
+  try {
+    // Step 1: fetch cocktail lists for each selected ingredient in parallel
+    const results = await Promise.all(ingredients.map(ing => fetchByIngredient(ing)));
+
+    // Step 2: build a map of idDrink → how many selected ingredients it uses
+    const countMap = {};
+    const nameMap = {};
+    results.forEach((drinks, idx) => {
+      drinks.forEach(d => {
+        countMap[d.idDrink] = (countMap[d.idDrink] || 0) + 1;
+        nameMap[d.idDrink] = d.strDrink;
+      });
+    });
+
+    // Step 3: separate perfect matches vs almost (missing 1)
+    // A "perfect match" means ALL selected ingredients appear in the cocktail
+    // An "almost" match means all but 1 selected ingredient appear
+    const perfectIds = [], almostIds = [];
+    Object.entries(countMap).forEach(([id, count]) => {
+      if (count === ingredients.length) perfectIds.push(id);
+      else if (count === ingredients.length - 1 && ingredients.length > 1) almostIds.push(id);
+    });
+
+    // Step 4: fetch details for up to 24 drinks total
+    const toFetch = [
+      ...perfectIds.slice(0, 16),
+      ...almostIds.slice(0, 8)
+    ];
+
+    const details = await Promise.all(toFetch.map(id => fetchDetails(id)));
+
+    const perfect = [], almostOne = [];
+
+    details.forEach((raw, i) => {
+      if (!raw) return;
+      const drink = parseDrink(raw);
+      const drinkIngs = drink.ingredients.map(x => x.toLowerCase());
+
+      // Find which selected ingredients are missing from this drink
+      const missing = have.filter(h => !drinkIngs.some(d =>
+        d.includes(h) || h.includes(d.split(' ')[0])
+      ));
+
+      if (i < perfectIds.slice(0,16).length) {
+        drink.missing = [];
+        perfect.push(drink);
+      } else {
+        // For "almost", find what the user is missing
+        const missingDisplay = ingredients.filter(ing =>
+          !drinkIngs.some(d => d.toLowerCase().includes(ing.toLowerCase().split(' ')[0]))
+        );
+        drink.missing = missingDisplay.length > 0 ? missingDisplay : [ingredients[ingredients.length - 1]];
+        almostOne.push(drink);
+      }
+    });
+
+    // Also include hardcoded classics that match
+    const haveSet = new Set(have);
+    cocktails
+      .filter(c => !noShakeMode || c.method === 'build' || c.method === 'blend')
+      .forEach(c => {
+        const needed = c.ingredients.map(i => i.toLowerCase());
+        const missingLocal = needed.filter(i => !haveSet.has(i));
+        const alreadyIn = [...perfect, ...almostOne].some(x => x.name.toLowerCase() === c.name.toLowerCase());
+        if (!alreadyIn) {
+          if (missingLocal.length === 0) perfect.unshift({ ...c, missing: [] });
+          else if (missingLocal.length === 1) almostOne.unshift({ ...c, missing: missingLocal });
+        }
+      });
+
+    renderResults(perfect, almostOne);
+
+  } catch (err) {
+    console.error(err);
+    const tx = t[currentLang];
+    rp.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">⚠️</div>
+      <div class="empty-title">${tx.connectionErrorTitle}</div>
+      <div class="empty-sub">${tx.connectionErrorSub}</div>
+    </div>`;
+  }
+}
+
+function renderResults(perfect, almost) {
+  const tx = t[currentLang];
+  const rp = document.getElementById('right-panel');
+  const total = perfect.length + almost.length;
+
+  if (total === 0) {
+    rp.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">${tx.noMatchesTitle}</div>
+        <div class="empty-sub">${tx.noMatchesSub}</div>
+      </div>`;
+    return;
+  }
+
+  let html = `<div class="results-header"><div class="results-title">${tx.resultsTitle(total)}</div></div>`;
+
+  if (perfect.length > 0) {
+    html += `<div class="section-label">${tx.perfectMatch} — ${perfect.length}</div><div class="recipes-grid">`;
+    perfect.forEach((c, i) => { html += renderCard(c, i * 50); });
+    html += `</div>`;
+  }
+
+  if (almost.length > 0) {
+    html += `<div class="section-label">${tx.almostThere} — ${almost.length}</div><div class="recipes-grid">`;
+    almost.forEach((c, i) => { html += renderCard(c, i * 50, true); });
+    html += `</div>`;
+  }
+
+  rp.innerHTML = html;
+}
+
+function renderCard(c, delay, isMissing = false) {
+  const tx = t[currentLang];
+  const name = currentLang === 'zh' ? (c.nameZh || c.name) : c.name;
+  const subName = '';
+
+  const ingTags = c.ingredients.map(ing => {
+    const have = selectedIngredients.has(ing);
+    const display = displayIngredient(ing);
+    return `<span class="ing-tag ${have ? 'have' : 'missing'}">${display}</span>`;
+  }).join('');
+
+  const missingBadge = isMissing
+    ? `<div class="missing-badge">${tx.missing(c.missing.map(m => displayIngredient(m)).join(', '))}</div>`
+    : '';
+
+  const isFaved = favorites.has(c.id);
+  const favBtnHtml = `<button class="fav-btn ${isFaved ? 'active' : ''}" onclick="event.stopPropagation();toggleFav(${c.id},this)" title="Save">${isFaved ? '♥' : '♡'}</button>`;
+
+  const competitionTag = c.competition
+    ? `<div style="font-size:10px;color:var(--gold-dim);letter-spacing:0.5px;margin-bottom:6px;">🏆 ${currentLang === 'zh' ? (c.competitionZh || c.competition) : c.competition}</div>`
+    : '';
+
+  return `
+    <div class="recipe-card ${isMissing ? 'missing-one' : ''}" style="animation-delay:${delay}ms" onclick="openModal(${c.id})">
+      ${favBtnHtml}
+      ${missingBadge}
+      <div class="card-emoji">${c.emoji}</div>
+      <div class="card-name">${name}</div>
+      ${subName ? `<div class="card-name-zh">${subName}</div>` : ''}
+      ${competitionTag}
+      <div class="card-ingredients">${ingTags}</div>
+      <div class="card-difficulty">${tx.difficulty(c.difficulty)}</div>
+      ${renderMethodBadge(c.method)}
+    </div>`;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+async function openModal(id) {
+  document.getElementById('modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('modal-content').innerHTML = `
+    <div style="padding:60px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">${t[currentLang].loading}</div>
+    </div>`;
+
+  // Try hardcoded cocktails first
+  const local = cocktails.find(x => x.id === id);
+  if (local) { renderModal(local, null); return; }
+
+  // Otherwise fetch from API
+  const raw = await fetchDetails(id);
+  if (!raw) {
+    document.getElementById('modal-content').innerHTML = `<div style="padding:40px;text-align:center;color:var(--cream-muted)">${t[currentLang].couldNotLoadRecipe}</div>`;
+    return;
+  }
+  const c = parseDrink(raw);
+  const instructionText = raw.strInstructions || '';
+  c.stepsDisplay = instructionText.split(/\.\s+/).map(s => s.trim()).filter(s => s.length > 10).slice(0, 6);
+  if (c.stepsDisplay.length === 0) c.stepsDisplay = [instructionText];
+  c.tipDisplay = `${t[currentLang].source}: TheCocktailDB. ${t[currentLang].type}: ${raw.strAlcoholic || t[currentLang].unknown}, ${t[currentLang].glass}: ${raw.strGlass || t[currentLang].unknown}.`;
+  renderModal(c, raw);
+}
+
+function renderModal(c, raw) {
+  const tx = t[currentLang];
+  const name = c.isApiDrink ? c.name : (currentLang === 'zh' ? (c.nameZh || c.name) : c.name);
+  const subName = '';
+  const isFaved = favorites.has(c.id);
+
+  const ingTags = c.ingredients.map(ing => {
+    const have = selectedIngredients.has(ing) ||
+      Array.from(selectedIngredients).some(s =>
+        ing.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(ing.toLowerCase().split(' ')[0])
+      );
+    const display = displayIngredient(ing);
+    return `<span class="ing-tag ${have ? 'have' : 'missing'}">${display}</span>`;
+  }).join('');
+
+  let stepsHtml = '';
+  if (c.steps) {
+    (c.steps[currentLang] || c.steps.en).forEach((s, i) => {
+      stepsHtml += `<div class="modal-step"><div class="step-num">${i+1}</div><div class="step-text">${s}</div></div>`;
+    });
+  } else {
+    (c.stepsDisplay || [c.stepsRaw]).forEach((s, i) => {
+      stepsHtml += `<div class="modal-step"><div class="step-num">${i+1}</div><div class="step-text">${s}${s.endsWith('.') ? '' : '.'}</div></div>`;
+    });
+  }
+
+  const tip = c.tip ? c.tip[currentLang] : (c.tipDisplay || '');
+  const thumbHtml = raw?.strDrinkThumb
+    ? `<img src="${raw.strDrinkThumb}" alt="${name}" style="width:100%;height:180px;object-fit:cover;border-radius:4px;margin-bottom:20px;opacity:0.85;">`
+    : '';
+
+  const competitionBadge = c.competition
+    ? `<div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 10px;background:rgba(201,168,76,0.15);border:1px solid var(--gold-dim);border-radius:2px;font-size:11px;color:var(--gold-light);letter-spacing:0.5px;">${currentLang === 'zh' ? (c.competitionZh || c.competition) : c.competition}</div>`
+    : '';
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-header">
+      <div>
+        <span class="modal-emoji">${c.emoji}</span>
+        <div class="modal-name">${name}</div>
+        ${subName ? `<div class="modal-name-zh">${subName}</div>` : ''}
+        ${competitionBadge}
+      </div>
+      <button class="close-btn" onclick="closeModal()">${tx.close}</button>
+    </div>
+    <div class="modal-body">
+      ${thumbHtml}
+      <div class="modal-section-title">${tx.ingredients}</div>
+      <div class="modal-ingredients">${ingTags}</div>
+      <div class="modal-section-title">${tx.instructions}</div>
+      ${stepsHtml}
+      ${tip ? `<div class="modal-tip"><strong>${tx.barTip}:</strong> ${tip}</div>` : ''}
+      ${(() => {
+        const alt = getNoShakeTip(c.method, currentLang);
+        return alt ? `<div class="noshake-tip"><div class="noshake-tip-title">${alt.title}</div>${alt.tip}</div>` : '';
+      })()}
+      <button class="modal-fav-btn ${isFaved ? 'active' : ''}" id="modal-fav-btn" onclick="toggleFavModal('${c.id}')">
+        ${isFaved ? tx.savedBtn : tx.saveBtn}
+      </button>
+    </div>`;
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── FAVORITES ─────────────────────────────────────────────────────────────────
+function toggleFav(id, btn) {
+  if (favorites.has(id)) {
+    favorites.delete(id);
+    if (btn) { btn.textContent = '♡'; btn.classList.remove('active'); }
+  } else {
+    favorites.add(id);
+    if (btn) { btn.textContent = '♥'; btn.classList.add('active'); }
+  }
+  updateFavNav();
+  if (showingFavs) renderFavs();
+}
+
+function toggleFavModal(id) {
+  const tx = t[currentLang];
+  const btn = document.getElementById('modal-fav-btn');
+  if (favorites.has(id)) {
+    favorites.delete(id);
+    btn.textContent = tx.saveBtn;
+    btn.classList.remove('active');
+  } else {
+    favorites.add(id);
+    btn.textContent = tx.savedBtn;
+    btn.classList.add('active');
+  }
+  updateFavNav();
+  // update card heart if visible
+  const cardFavBtn = document.querySelector(`.recipe-card[onclick="openModal(${id})"] .fav-btn`);
+  if (cardFavBtn) {
+    cardFavBtn.textContent = favorites.has(id) ? '♥' : '♡';
+    cardFavBtn.classList.toggle('active', favorites.has(id));
+  }
+  if (showingFavs) renderFavs();
+}
+
+function updateFavNav() {
+  const count = favorites.size;
+  const countEl = document.getElementById('fav-nav-count');
+  countEl.textContent = count;
+  countEl.style.display = count > 0 ? 'inline' : 'none';
+}
+
+function toggleFavView() {
+  showingFavs = !showingFavs;
+  const btn = document.getElementById('fav-nav-btn');
+  btn.classList.toggle('active', showingFavs);
+  document.getElementById('fav-nav-icon').textContent = showingFavs ? '♥' : '♡';
+
+  if (showingFavs) {
+    // Exit other views
+    showingMenu = false;
+    tonightCocktail = null;
+    document.getElementById('menu-nav-btn').classList.remove('active');
+    renderFavs();
+  } else {
+    resetRightPanel();
+  }
+}
+
+function renderFavs() {
+  const tx = t[currentLang];
+  const rp = document.getElementById('right-panel');
+  if (favorites.size === 0) {
+    rp.innerHTML = `<div class="fav-empty">
+      <div class="empty-icon">♡</div>
+      <div class="empty-title">${tx.favEmpty}</div>
+      <div class="empty-sub">${tx.favEmptySub}</div>
+    </div>`;
+    return;
+  }
+  const favCocktails = cocktails.filter(c => favorites.has(c.id));
+  let html = `<div class="results-header"><div class="results-title">${tx.favTitle}</div><div class="results-count">${favCocktails.length}</div></div>`;
+  html += `<div class="recipes-grid">`;
+  favCocktails.forEach((c, i) => { html += renderCard(c, i * 50); });
+  html += `</div>`;
+  rp.innerHTML = html;
+}
+
+// ── TONIGHT'S PICK ────────────────────────────────────────────────────────────
+let tonightCocktail = null;
+
+function showTonightPick() {
+  // Spin animation on button
+  const btn = document.getElementById('tonight-btn');
+  btn.classList.add('spinning');
+  setTimeout(() => btn.classList.remove('spinning'), 500);
+
+  // Exit other views
+  showingFavs = false;
+  showingMenu = false;
+  document.getElementById('fav-nav-btn').classList.remove('active');
+  document.getElementById('fav-nav-icon').textContent = '♡';
+  document.getElementById('menu-nav-btn').classList.remove('active');
+
+  // Pick a random cocktail (prefer ones the user can make, fallback to any)
+  const have = Array.from(selectedIngredients).map(i => i.toLowerCase());
+  let pool = [];
+
+  if (have.length >= 2) {
+    pool = cocktails.filter(c => {
+      const needed = c.ingredients.map(i => i.toLowerCase());
+      const missing = needed.filter(i => !have.some(h => i.includes(h) || h.includes(i.split(' ')[0])));
+      return missing.length === 0;
+    });
+  }
+
+  // Fallback: "almost there" drinks
+  if (pool.length === 0 && have.length >= 1) {
+    pool = cocktails.filter(c => {
+      const needed = c.ingredients.map(i => i.toLowerCase());
+      const missing = needed.filter(i => !have.some(h => i.includes(h) || h.includes(i.split(' ')[0])));
+      return missing.length <= 2;
+    });
+  }
+
+  // Final fallback: all cocktails
+  if (pool.length === 0) pool = [...cocktails];
+
+  // Avoid repeating the same pick
+  const filtered = pool.filter(c => !tonightCocktail || c.id !== tonightCocktail.id);
+  const source = filtered.length > 0 ? filtered : pool;
+  tonightCocktail = source[Math.floor(Math.random() * source.length)];
+
+  renderTonightPick(tonightCocktail);
+}
+
+function renderTonightPick(c) {
+  const tx = t[currentLang];
+  const rp = document.getElementById('right-panel');
+  const name = currentLang === 'zh' ? (c.nameZh || c.name) : c.name;
+  const subName = '';
+  const have = Array.from(selectedIngredients).map(i => i.toLowerCase());
+
+  // Calculate readiness
+  const needed = c.ingredients.map(i => i.toLowerCase());
+  const haveCount = needed.filter(i => have.some(h => i.includes(h) || h.includes(i.split(' ')[0]))).length;
+  const total = needed.length;
+  const pct = Math.round((haveCount / total) * 100);
+
+  const readinessHtml = selectedIngredients.size > 0
+    ? `<div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:10px;color:var(--cream-muted);letter-spacing:1px;text-transform:uppercase;">${tx.readiness}</span>
+          <span style="font-size:10px;color:var(--gold-dim);">${haveCount}/${total} ${tx.ingredientsUnit}</span>
+        </div>
+        <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:var(--gold);border-radius:2px;transition:width 0.6s ease;"></div>
+        </div>
+       </div>`
+    : '';
+
+  const diffLabel = tx.difficulty(c.difficulty);
+  const compBadge = c.competition
+    ? `<div style="font-size:10px;color:var(--gold-dim);margin-bottom:6px;">🏆 ${currentLang === 'zh' ? (c.competitionZh || c.competition) : c.competition}</div>`
+    : '';
+
+  // Previous results area — keep it, just prepend spotlight
+  const prevContent = rp.querySelector('.results-header') ? rp.innerHTML : '';
+
+  rp.innerHTML = `
+    <div class="tonight-spotlight">
+      <div class="tonight-label">${tx.tonightLabel}</div>
+      <div class="tonight-card" onclick="openModal(${c.id})" style="cursor:pointer;">
+        <div class="tonight-emoji">${c.emoji}</div>
+        <div class="tonight-info">
+          ${compBadge}
+          <div class="tonight-name">${name}</div>
+          ${subName ? `<div class="tonight-sub">${subName}</div>` : ''}
+          <div class="tonight-meta">${diffLabel} · ${total} ${tx.ingredientsUnit}</div>
+          ${readinessHtml}
+          <div class="tonight-actions">
+            <button class="tonight-view-btn" onclick="event.stopPropagation();openModal(${c.id})">${tx.viewRecipe}</button>
+            <button class="tonight-reroll" onclick="event.stopPropagation();showTonightPick()">${tx.reroll}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${prevContent || `<div class="empty-state">
+      <div class="empty-icon">🍸</div>
+      <div class="empty-title" id="empty-title">${tx.emptyTitle}</div>
+      <div class="empty-sub" id="empty-sub">${tx.emptySub}</div>
+    </div>`}`;
+}
+
+// ── MENU / ALL DRINKS VIEW ────────────────────────────────────────────────────
+let showingMenu = false;
+let menuFilter = 'all';
+let menuSearch = '';
+let menuCocktails = [];      // local + API combined pool
+let menuPreloaded = false;   // guard so we only fetch once
+
+// Categories to preload from API — broad sweep for variety
+const PRELOAD_CATEGORIES = ['Cocktail', 'Ordinary_Drink', 'Shot', 'Punch_/_Party_Drink'];
+
+async function preloadMenuCocktails() {
+  if (menuPreloaded) return;
+  menuPreloaded = true;
+
+  // Start with local hardcoded set
+  menuCocktails = [...cocktails];
+
+  try {
+    // Fetch each category in parallel
+    const results = await Promise.allSettled(
+      PRELOAD_CATEGORIES.map(cat =>
+        fetch(`https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(cat)}`)
+          .then(r => r.json())
+          .then(d => d.drinks || [])
+      )
+    );
+
+    // Collect all unique IDs not already in local set
+    const localIds = new Set(cocktails.map(c => String(c.id)));
+    const allApiDrinks = [];
+    const seen = new Set();
+
+    results.forEach(r => {
+      if (r.status === 'fulfilled') {
+        r.value.forEach(d => {
+          if (!seen.has(d.idDrink) && !localIds.has(d.idDrink)) {
+            seen.add(d.idDrink);
+            allApiDrinks.push(d);
+          }
+        });
+      }
+    });
+
+    // Shuffle and cap at 120 so we don't over-fetch detail calls
+    const shuffled = allApiDrinks.sort(() => Math.random() - 0.5).slice(0, 120);
+
+    // Fetch details in batches of 10 to avoid hammering the API
+    const BATCH = 10;
+    for (let i = 0; i < shuffled.length; i += BATCH) {
+      const batch = shuffled.slice(i, i + BATCH);
+      const details = await Promise.allSettled(
+        batch.map(d => fetchDetails(d.idDrink))
+      );
+      details.forEach(r => {
+        if (r.status === 'fulfilled' && r.value) {
+          const parsed = parseDrink(r.value);
+          // Infer method from instructions text
+          const instr = (r.value.strInstructions || '').toLowerCase();
+          if (/blend|blender/.test(instr)) parsed.method = 'blend';
+          else if (/stir|build|pour/.test(instr) && !/shak/.test(instr)) parsed.method = 'build';
+          else parsed.method = 'shake';
+          menuCocktails.push(parsed);
+        }
+      });
+
+      // Re-render grid after each batch so cards appear progressively
+      if (showingMenu) renderMenuGrid();
+    }
+
+  } catch (err) {
+    console.warn('Menu preload error:', err);
+    // silently fall back to local only — menuCocktails already has locals
+  }
+
+  if (showingMenu) renderMenuGrid();
+}
+
+function toggleMenuView() {
+  showingMenu = !showingMenu;
+  const btn = document.getElementById('menu-nav-btn');
+  btn.classList.toggle('active', showingMenu);
+
+  if (showingMenu) {
+    // Exit other views
+    showingFavs = false;
+    tonightCocktail = null;
+    document.getElementById('fav-nav-btn').classList.remove('active');
+    document.getElementById('fav-nav-icon').textContent = '♡';
+    menuFilter = 'all';
+    menuSearch = '';
+    // Seed with locals immediately, then kick off background preload
+    if (menuCocktails.length === 0) menuCocktails = [...cocktails];
+    renderMenu();
+    preloadMenuCocktails();
+  } else {
+    resetRightPanel();
+  }
+}
+
+function resetRightPanel() {
+  const tx = t[currentLang];
+  document.getElementById('right-panel').innerHTML = `<div class="empty-state">
+    <div class="empty-icon">🍸</div>
+    <div class="empty-title" id="empty-title">${tx.emptyTitle}</div>
+    <div class="empty-sub" id="empty-sub">${tx.emptySub}</div>
+  </div>`;
+}
+
+function setMenuFilter(f) {
+  menuFilter = f;
+  document.querySelectorAll('.menu-filter').forEach(b => b.classList.toggle('active', b.dataset.f === f));
+  renderMenuGrid();
+}
+
+function renderMenu() {
+  const tx = t[currentLang];
+  const rp = document.getElementById('right-panel');
+  const filterLabels = tx.menuFilters;
+
+  const loadingBadge = !menuPreloaded
+    ? `<div id="menu-loading" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--gold-dim);margin-left:8px;">
+        <div class="loading-spinner" style="width:12px;height:12px;border-width:2px;"></div>
+        ${tx.menuLoadingMore}
+       </div>`
+    : '';
+
+  rp.innerHTML = `
+    <div class="results-header">
+      <div class="results-title" style="display:flex;align-items:center;gap:4px;">
+        ${tx.allDrinks}
+        ${loadingBadge}
+      </div>
+      <div class="results-count" id="menu-count">${menuCocktails.length} ${tx.drinksUnit}</div>
+    </div>
+    <div class="menu-toolbar">
+      <input class="menu-search" id="menu-search" placeholder="${tx.menuSearchPlaceholder}" oninput="menuSearch=this.value;renderMenuGrid()">
+      <button class="menu-filter active" data-f="all" onclick="setMenuFilter('all')">${filterLabels.all}</button>
+      <button class="menu-filter" data-f="can-make" onclick="setMenuFilter('can-make')">${filterLabels.canMake}</button>
+      <button class="menu-filter" data-f="almost" onclick="setMenuFilter('almost')">${filterLabels.almost}</button>
+      <button class="menu-filter" data-f="competition" onclick="setMenuFilter('competition')">${filterLabels.comp}</button>
+      <button class="menu-filter" data-f="no-shake" onclick="setMenuFilter('no-shake')">${filterLabels.noShake}</button>
+    </div>
+    <div id="menu-grid" class="recipes-grid"></div>`;
+
+  renderMenuGrid();
+}
+
+function renderMenuGrid() {
+  const have = Array.from(selectedIngredients).map(i => i.toLowerCase());
+  const rawSearch = menuSearch.trim();
+  const search = rawSearch.toLowerCase();
+  const searchEn = toEn(rawSearch).toLowerCase();
+
+  let list = menuCocktails.map(c => {
+    const needed = c.ingredients.map(i => i.toLowerCase());
+    const missingCount = needed.filter(i => !have.some(h => i.includes(h) || h.includes(i.split(' ')[0]))).length;
+    return { ...c, missingCount, haveCount: needed.length - missingCount };
+  });
+
+  // Apply filter
+  if (menuFilter === 'can-make') list = list.filter(c => c.missingCount === 0);
+  else if (menuFilter === 'almost') list = list.filter(c => c.missingCount === 1 && selectedIngredients.size > 0);
+  else if (menuFilter === 'competition') list = list.filter(c => c.competition);
+  else if (menuFilter === 'no-shake') list = list.filter(c => c.method === 'build' || c.method === 'blend');
+
+  // Apply search
+  if (search) {
+    list = list.filter(c =>
+      c.name.toLowerCase().includes(search) ||
+      (c.nameZh && c.nameZh.includes(search)) ||
+      c.ingredients.some(i =>
+        i.toLowerCase().includes(search) ||
+        i.toLowerCase().includes(searchEn) ||
+        displayIngredient(i).toLowerCase().includes(search)
+      )
+    );
+  }
+
+  // Sort: locals first, then by readiness
+  list.sort((a, b) => {
+    if (a.missingCount !== b.missingCount) return a.missingCount - b.missingCount;
+    return (a.isApiDrink ? 1 : 0) - (b.isApiDrink ? 1 : 0);
+  });
+
+  const tx = t[currentLang];
+  const countEl = document.getElementById('menu-count');
+  if (countEl) countEl.textContent = `${list.length} ${tx.drinksUnit}`;
+  const loadingEl = document.getElementById('menu-loading');
+  if (loadingEl && menuPreloaded) loadingEl.style.display = 'none';
+
+  const grid = document.getElementById('menu-grid');
+  if (!grid) return;
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--cream-muted)">
+      ${tx.menuNoMatch}
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map((c, i) => {
+    const name = currentLang === 'zh' ? (c.nameZh || c.name) : c.name;
+    const subName = '';
+    const isFaved = favorites.has(c.id);
+    const total = c.ingredients.length;
+    const idStr = JSON.stringify(c.id);
+
+    let readinessHtml = '';
+    if (selectedIngredients.size > 0) {
+      if (c.missingCount === 0) {
+        readinessHtml = `<div class="readiness can-make">✓ ${tx.canMake}</div>`;
+      } else if (c.missingCount === 1) {
+        const missingIng = c.ingredients.find(ing => !have.some(h => ing.toLowerCase().includes(h) || h.includes(ing.toLowerCase().split(' ')[0])));
+        const missingDisplay = missingIng ? displayIngredient(missingIng) : '?';
+        readinessHtml = `<div class="readiness almost">${tx.missingShort(missingDisplay)}</div>`;
+      } else {
+        readinessHtml = `<div class="readiness missing">${c.haveCount}/${total} ${tx.haveShort}</div>`;
+      }
+    }
+
+    const compTag = c.competition
+      ? `<div style="font-size:10px;color:var(--gold-dim);margin-bottom:4px;">🏆 ${currentLang === 'zh' ? (c.competitionZh || c.competition) : c.competition}</div>`
+      : '';
+
+    const ingPreview = c.ingredients.slice(0, 4).map(ing => {
+      const hasIt = have.some(h => ing.toLowerCase().includes(h) || h.includes(ing.toLowerCase().split(' ')[0]));
+      const display = displayIngredient(ing);
+      return `<span class="ing-tag ${hasIt ? 'have' : 'missing'}">${display}</span>`;
+    }).join('') + (c.ingredients.length > 4 ? `<span class="ing-tag" style="opacity:0.5">+${c.ingredients.length - 4}</span>` : '');
+
+    return `
+      <div class="recipe-card" style="animation-delay:${Math.min(i,20)*20}ms" onclick="openModal(${idStr})">
+        <button class="fav-btn ${isFaved?'active':''}" onclick="event.stopPropagation();toggleFav(${idStr},this)">${isFaved?'♥':'♡'}</button>
+        <div class="card-emoji">${c.emoji}</div>
+        <div class="card-name">${name}</div>
+        ${subName ? `<div class="card-name-zh">${subName}</div>` : ''}
+        ${compTag}
+        <div class="card-ingredients">${ingPreview}</div>
+        <div class="card-difficulty">${tx.difficulty(c.difficulty)}</div>
+        ${renderMethodBadge(c.method)}
+        ${readinessHtml}
+      </div>`;
+  }).join('');
+}
+
+// ── NO-SHAKE MODE ─────────────────────────────────────────────────────────────
+// Alternative instructions for shake cocktails when user has no shaker
+const noShakeAlts = {
+  en: {
+    'shake': {
+      title: '🥄 No Shaker? No Problem.',
+      tip: `Use a large jar or tall cup with a lid (a water bottle works too). Add all ingredients with ice, cover tightly, and shake by hand — 15 seconds is enough. Then pour through a strainer or hold the ice back with a fork while you pour. The result is nearly identical.`
+    },
+    'blend': {
+      title: '🥄 No Blender?',
+      tip: `Fill a glass with crushed ice (put cubes in a zip-lock bag and tap with a rolling pin). Add all ingredients and stir vigorously for 30 seconds. It won't be as creamy, but the flavour is the same. Or shake in a jar — it'll be chunkier but totally drinkable.`
+    }
+  },
+  zh: {
+    'shake': {
+      title: '🥄 没有摇酒壶？没关系。',
+      tip: `用有盖子的大罐子或高杯（密封水瓶也可以）。加入所有材料和冰块，盖紧后用手摇晃15秒。倒酒时用叉子挡住冰块，或用滤网过滤。效果几乎一样好。`
+    },
+    'blend': {
+      title: '🥄 没有搅拌机？',
+      tip: `把冰块装进密封袋，用擀面杖敲碎成碎冰，装入杯中。加入所有材料，用勺子用力搅拌30秒。口感不如搅拌机细腻，但味道完全一样。也可以用罐子摇，会有些冰渣但完全可以喝。`
+    }
+  },
+  ja: {
+    'shake': {
+      title: '🥄 シェイカーがなくても大丈夫。',
+      tip: `フタ付きの大きめの瓶や背の高いカップ（水筒でも可）を使います。材料と氷を入れてしっかり閉め、15秒ほど強く振ってください。注ぐときは茶こしを使うか、フォークで氷を押さえればOKです。仕上がりはほぼ同じです。`
+    },
+    'blend': {
+      title: '🥄 ミキサーがない場合は？',
+      tip: `氷を袋に入れて砕き、グラスに入れます。材料を加えて30秒ほど強くかき混ぜてください。なめらかさは少し落ちますが、味はしっかり再現できます。瓶で振る方法でも作れます。`
+    }
+  }
+};
+
+// Method labels for display
+const methodLabels = {
+  en: { build: '✓ No shaker needed', shake: '🍸 Shaker recommended', blend: '🌀 Blender recommended' },
+  zh: { build: '✓ 无需摇酒壶', shake: '🍸 需要摇酒壶', blend: '🌀 需要搅拌机' },
+  ja: { build: '✓ シェイカー不要', shake: '🍸 シェイカー推奨', blend: '🌀 ミキサー推奨' }
+};
+
+function toggleNoShake() {
+  noShakeMode = !noShakeMode;
+  const btn = document.getElementById('noshake-btn');
+  btn.classList.toggle('active', noShakeMode);
+
+  // Re-render current view if results are showing
+  const rp = document.getElementById('right-panel');
+  const hasResults = rp.querySelector('.recipes-grid');
+  if (hasResults && !showingFavs && !showingMenu) findCocktails();
+  if (showingMenu) renderMenuGrid();
+}
+
+function getNoShakeTip(method, lang) {
+  if (method === 'build') return null; // build method needs no tip
+  return noShakeAlts[lang]?.[method] || null;
+}
+
+function renderMethodBadge(method) {
+  if (!method) return '';
+  const label = methodLabels[currentLang]?.[method] || method;
+  const cls = method === 'build' ? 'build' : method === 'blend' ? 'blend' : '';
+  return `<div class="method-badge ${cls}">${label}</div>`;
+}
+
+// ── NO-SHAKE TRANSLATIONS ─────────────────────────────────────────────────────
+// ── SPLASH ────────────────────────────────────────────────────────────────────
+const splashText = {
+  en: {
+    f1t: 'Tell Us What You Have', f1d: 'Select spirits, juices, and extras from your home bar',
+    f2t: 'We Find the Matches',   f2d: 'Instant recipes — perfect matches and almost-theres',
+    f3t: 'Mix Like a Pro',        f3d: 'Step-by-step instructions with bartender tips',
+    tagline: 'Your bar. Your cocktails. Tonight.',
+    enter: 'Enter', skip: 'Skip intro'
+  },
+  zh: {
+    f1t: '告诉我们你有什么', f1d: '从你的家庭酒吧中选择基酒、果汁和其他材料',
+    f2t: '我们来找配方',     f2d: '即时匹配——完全符合或差一步的食谱',
+    f3t: '像专业调酒师一样', f3d: '分步骤操作指南，附带调酒师技巧',
+    tagline: '你的酒吧。你的鸡尾酒。今晚就喝。',
+    enter: '进入', skip: '跳过介绍'
+  },
+  ja: {
+    f1t: '手元の材料を選ぶ',
+    f1d: '自宅バーにあるスピリッツ、ジュース、材料を選択',
+    f2t: 'レシピを自動で提案',
+    f2d: 'ぴったり一致とあと少しのレシピをすぐ表示',
+    f3t: 'プロのように作る',
+    f3d: '手順ごとのガイドとバーテンダーのコツ付き',
+    tagline: 'あなたのバー。あなたのカクテル。今夜すぐ。',
+    enter: '開始',
+    skip: 'イントロをスキップ'
+  }
+};
+
+// Force English UI
+currentLang = 'en';
+
+function initSplash() {
+  applySplashText();
+  spawnParticles();
+}
+
+function applySplashText() {
+  const s = splashText[currentLang] || splashText.en;
+  const btnEn = document.getElementById('btn-en');
+  if (btnEn) btnEn.classList.add('active');
+  document.getElementById('sf1-title').textContent = s.f1t;
+  document.getElementById('sf1-desc').textContent  = s.f1d;
+  document.getElementById('sf2-title').textContent = s.f2t;
+  document.getElementById('sf2-desc').textContent  = s.f2d;
+  document.getElementById('sf3-title').textContent = s.f3t;
+  document.getElementById('sf3-desc').textContent  = s.f3d;
+  document.getElementById('splash-tagline').textContent = s.tagline;
+  document.getElementById('splash-btn').textContent = s.enter;
+  document.getElementById('splash-skip').textContent = s.skip;
+}
+
+function spawnParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left: ${20 + Math.random() * 60}%;
+      bottom: ${10 + Math.random() * 30}%;
+      --drift: ${(Math.random() - 0.5) * 60}px;
+      animation-duration: ${3 + Math.random() * 4}s;
+      animation-delay: ${Math.random() * 4}s;
+      width: ${2 + Math.random() * 3}px;
+      height: ${2 + Math.random() * 3}px;
+      opacity: 0;
+    `;
+    container.appendChild(p);
+  }
+}
+
+function enterApp() {
+  const splash = document.getElementById('splash');
+  splash.classList.add('exit');
+  setTimeout(() => {
+    splash.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 900);
+}
+
+// Prevent scroll while splash is showing
+document.body.style.overflow = 'hidden';
+initSplash();
+init();
+setLang('en');
+</script>
+</body>
+</html>
