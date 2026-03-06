@@ -6,7 +6,7 @@ A minimalist home cocktail finder that suggests drinks based on the ingredients 
 
 ## Live Demo
 
-[Open the App](https://drink-app.vercel.app)
+https://drink-app-pi.vercel.app/
 
 ---
 
