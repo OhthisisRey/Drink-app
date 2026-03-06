@@ -1657,6 +1657,9 @@ let selectedIngredients = new Set();
 let favorites = new Set();
 let showingFavs = false;
 let noShakeMode = false;
+let discoveredDrinks = new Map();
+let lastSelectedSnapshot = new Set();
+let lastResultDrinks = [];
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 function init() {
@@ -1963,7 +1966,8 @@ async function fetchByIngredient(ingredient) {
   try {
     const res = await fetch(`${API}/filter.php?i=${encodeURIComponent(ingredient)}`);
     const data = await res.json();
-    const drinks = data.drinks || [];
+    // TheCocktailDB may return non-array values (e.g. "None Found").
+    const drinks = Array.isArray(data?.drinks) ? data.drinks : [];
     apiCache[ingredient] = drinks;
     return drinks;
   } catch { return []; }
@@ -2019,76 +2023,77 @@ async function findCocktails() {
 
   const ingredients = Array.from(selectedIngredients);
   const have = ingredients.map(i => i.toLowerCase());
+  const currentSelectionSet = new Set(ingredients);
 
   try {
     // Step 1: fetch cocktail lists for each selected ingredient in parallel
     const results = await Promise.all(ingredients.map(ing => fetchByIngredient(ing)));
 
-    // Step 2: build a map of idDrink → how many selected ingredients it uses
+    // Step 2: build a map of idDrink → how many selected ingredients it matched
     const countMap = {};
-    const nameMap = {};
-    results.forEach((drinks, idx) => {
-      drinks.forEach(d => {
+    results.forEach((drinks) => {
+      const safeDrinks = Array.isArray(drinks) ? drinks : [];
+      safeDrinks.forEach(d => {
         countMap[d.idDrink] = (countMap[d.idDrink] || 0) + 1;
-        nameMap[d.idDrink] = d.strDrink;
       });
     });
 
-    // Step 3: separate perfect matches vs almost (missing 1)
-    // A "perfect match" means ALL selected ingredients appear in the cocktail
-    // An "almost" match means all but 1 selected ingredient appear
-    const perfectIds = [], almostIds = [];
-    Object.entries(countMap).forEach(([id, count]) => {
-      if (count === ingredients.length) perfectIds.push(id);
-      else if (count === ingredients.length - 1 && ingredients.length > 1) almostIds.push(id);
-    });
-
-    // Step 4: fetch details for up to 24 drinks total
-    const toFetch = [
-      ...perfectIds.slice(0, 16),
-      ...almostIds.slice(0, 8)
-    ];
+    // Step 3: fetch details for top candidate IDs (union of matches).
+    // This lets us score by "what you're missing from a recipe", so results
+    // improve naturally as users add more ingredients.
+    const toFetch = Object.entries(countMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => id);
 
     const details = await Promise.all(toFetch.map(id => fetchDetails(id)));
+    const containsIngredient = (drinkIng, haveIng) => {
+      const d = drinkIng.toLowerCase();
+      const h = haveIng.toLowerCase();
+      return d === h || d.includes(h) || h.includes(d.split(' ')[0]);
+    };
 
-    const perfect = [], almostOne = [];
-
-    details.forEach((raw, i) => {
+    // Persist discovered API drinks so adding ingredients never "forgets"
+    // previously discovered candidates during the same session.
+    details.forEach((raw) => {
       if (!raw) return;
       const drink = parseDrink(raw);
-      const drinkIngs = drink.ingredients.map(x => x.toLowerCase());
-
-      // Find which selected ingredients are missing from this drink
-      const missing = have.filter(h => !drinkIngs.some(d =>
-        d.includes(h) || h.includes(d.split(' ')[0])
-      ));
-
-      if (i < perfectIds.slice(0,16).length) {
-        drink.missing = [];
-        perfect.push(drink);
-      } else {
-        // For "almost", find what the user is missing
-        const missingDisplay = ingredients.filter(ing =>
-          !drinkIngs.some(d => d.toLowerCase().includes(ing.toLowerCase().split(' ')[0]))
-        );
-        drink.missing = missingDisplay.length > 0 ? missingDisplay : [ingredients[ingredients.length - 1]];
-        almostOne.push(drink);
-      }
+      discoveredDrinks.set(String(drink.id), drink);
     });
 
-    // Also include hardcoded classics that match
-    const haveSet = new Set(have);
-    cocktails
-      .filter(c => !noShakeMode || c.method === 'build' || c.method === 'blend')
-      .forEach(c => {
-        const needed = c.ingredients.map(i => i.toLowerCase());
-        const missingLocal = needed.filter(i => !haveSet.has(i));
-        const alreadyIn = [...perfect, ...almostOne].some(x => x.name.toLowerCase() === c.name.toLowerCase());
-        if (!alreadyIn) {
-          if (missingLocal.length === 0) perfect.unshift({ ...c, missing: [] });
-          else if (missingLocal.length === 1) almostOne.unshift({ ...c, missing: missingLocal });
-        }
-      });
+    const perfect = [], almostOne = [];
+    const seenNames = new Set();
+    const classifyAndPush = (drink, preferFront = false) => {
+      if (noShakeMode && drink.method !== 'build' && drink.method !== 'blend') return;
+      const nameKey = (drink.name || '').toLowerCase();
+      if (seenNames.has(nameKey)) return;
+
+      const missingLocal = drink.ingredients.filter(ing =>
+        !have.some(h => containsIngredient(ing, h))
+      );
+      if (missingLocal.length === 0) {
+        seenNames.add(nameKey);
+        preferFront ? perfect.unshift({ ...drink, missing: [] }) : perfect.push({ ...drink, missing: [] });
+      } else if (missingLocal.length === 1) {
+        seenNames.add(nameKey);
+        preferFront ? almostOne.unshift({ ...drink, missing: missingLocal }) : almostOne.push({ ...drink, missing: missingLocal });
+      }
+    };
+
+    // Classify all discovered API drinks.
+    discoveredDrinks.forEach(drink => classifyAndPush(drink));
+    // Also include hardcoded classics.
+    cocktails.forEach(c => classifyAndPush(c, true));
+
+    // Monotonic guarantee: if current selection is a superset of previous
+    // selection, carry forward previous results so adding ingredients
+    // never reduces visible results in-session.
+    const isSupersetOfLast = [...lastSelectedSnapshot].every(x => currentSelectionSet.has(x));
+    if (isSupersetOfLast && lastResultDrinks.length > 0) {
+      lastResultDrinks.forEach(drink => classifyAndPush(drink));
+    }
+
+    lastSelectedSnapshot = currentSelectionSet;
+    lastResultDrinks = [...perfect, ...almostOne];
 
     renderResults(perfect, almostOne);
 
